@@ -1,10 +1,11 @@
 package config
 
 import (
-	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strings"
 	"sync"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Config struct {

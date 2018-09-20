@@ -8,6 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"regexp"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/LilyPad/GoLilyPad/packet"
 	"github.com/LilyPad/GoLilyPad/packet/minecraft"
 	mc112 "github.com/LilyPad/GoLilyPad/packet/minecraft/v112"
@@ -20,12 +27,6 @@ import (
 	"github.com/LilyPad/GoLilyPad/server/proxy/auth"
 	"github.com/LilyPad/GoLilyPad/server/proxy/connect"
 	uuid "github.com/satori/go.uuid"
-	"io/ioutil"
-	"net"
-	"regexp"
-	"strings"
-	"sync"
-	"time"
 )
 
 type Session struct {
@@ -121,9 +122,9 @@ func (this *Session) Write(packet packet.Packet) (err error) {
 func (this *Session) Redirect(server *connect.Server) {
 	event := eventSessionRedirect{
 		eventSessionCancellable: eventSessionCancellable{eventSession: eventSession{this}},
-		init:                    this.state == STATE_INIT,
-		serverName:              server.Name,
-		serverAddr:              server.Addr,
+		init:       this.state == STATE_INIT,
+		serverName: server.Name,
+		serverAddr: server.Addr,
 	}
 	eventBus := this.server.apiEventBus
 	eventBus.fireEventSession(eventBus.sessionRedirect, &event)
@@ -373,6 +374,12 @@ func (this *Session) handlePacket(packet packet.Packet) (err error) {
 			if iconString != "" {
 				response["favicon"] = iconString
 			}
+
+			response["modinfo"] = struct {
+				Type    string        `json:"type"`
+				ModList []interface{} `json:"modList"`
+			}{"FML", []interface{}{}}
+
 			var marshalled []byte
 			marshalled, err = json.Marshal(response)
 			if err != nil {
